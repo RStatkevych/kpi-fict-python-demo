@@ -1,0 +1,80 @@
+version: "3"
+
+services:
+  application:
+    build:
+      context: .
+    tty: true
+    stdin_open: true
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./workshop_app/:/code/workshop_app
+    ports:
+      - 8080:8080
+    healthcheck:
+      test: 'netstat -tuplen | grep 8080'
+      interval: 10s
+      timeout: 60s
+
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./nginx:/etc/nginx
+    environment:
+      - NGINX_PORT=80
+    depends_on:
+      application:
+        condition: service_healthy
+    ports:
+      - 80:80
+    healthcheck:
+      test: 'netstat -tuplen | grep 80'
+      interval: 10s
+      timeout: 60s
+
+
+  database:
+    image: postgres:9.6-alpine
+    environment:
+      POSTGRES_PASSWORD: S0meP@ssw0rd
+      POSTGRES_DB: test
+    volumes:
+      - ./db/:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: 'netstat -tuplen | grep 5432'
+      interval: 10s
+      timeout: 60s
+
+  redis:
+    image: redis:alpine
+    healthcheck:
+      test: 'netstat -tuplen | grep 6379'
+      interval: 10s
+      timeout: 60s
+
+  tests:
+    build:
+      context: .
+    depends_on:
+      application:
+        condition: service_healthy
+    volumes:
+      - ./workshop_app/:/code/workshop_app
+      - ./tests/:/code/tests
+    command: 'pytest tests/'
+
+  frontend_dev:
+    build:
+      context: ui/
+    network_mode: host
+    depends_on:
+      nginx:
+        condition: service_healthy
+    volumes:
+      - ./ui/:/usr/app/
+    tty: true
+    stdin_open: true
