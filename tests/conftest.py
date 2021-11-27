@@ -12,7 +12,7 @@ async def aio_client(event_loop):
 @pytest.fixture(autouse=True)
 async def pg_connection(event_loop):
     async with aiopg.connect(user='postgres', host='database',
-                             password='S0meP@ssw0rd',
+                             password='test',
                              database='test',
                              echo=True,) as conn:
         async with conn.cursor() as cursor:

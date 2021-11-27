@@ -40,7 +40,7 @@ services:
   database:
     image: postgres:9.6-alpine
     environment:
-      POSTGRES_PASSWORD: S0meP@ssw0rd
+      POSTGRES_PASSWORD: test
       POSTGRES_DB: test
     volumes:
       - ./db/:/docker-entrypoint-initdb.d
